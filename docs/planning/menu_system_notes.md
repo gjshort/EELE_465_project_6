@@ -2,8 +2,8 @@
 
 ## Menu Hierarchy
 - Main screen
-- Keyboard Window size
-- Keyboard LCD contrast
+- Window size
+- LCD contrast
 - RTC settings
 	- Main menu
 	- Year
@@ -39,3 +39,15 @@
 	- The same method as scrolling down is applied except the row selection indicator will sit on the row second from the top until the first menu item is displayed in row 0. Then the indicator will move to the top row.
 
 ![Menu_Scroll_Up](menu_scroll_up_img.svg)
+
+## Menu System State Machine
+
+![Menu_state_digram](menu_state_diagram.svg)
+
+
+
+
+
+
+
+
