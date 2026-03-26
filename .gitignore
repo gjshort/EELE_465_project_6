@@ -57,3 +57,10 @@ targetConfigs/
 
 # macOS DS_Store
 .DS_Store
+
+# Draw.io backups
+*.drawio.bkp
+
+# Python Environment
+*.spec
+uv.lock
