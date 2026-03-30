@@ -23,8 +23,17 @@ typedef struct menu_item
     char *value_to_display;
 } menu_item;
 
-extern menu_item *main_menu[7];
+typedef struct menu_sys
+{
+    menu_item **current_submenu;
+    uint8_t current_menu_size;
+} menu_sys;
 
-void menu_action(menu_item *menu, char action);
+extern menu_sys lcd_menu;
+
+#define MAIN_MENU_SIZE 6
+extern menu_item *main_menu[MAIN_MENU_SIZE];
+
+void menu_action(menu_item **menu, char action);
 
 #endif
