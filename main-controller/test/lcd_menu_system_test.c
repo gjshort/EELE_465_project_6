@@ -41,12 +41,12 @@ int main(void)
     {
         if((P3IN & BIT5) != 0)
         {
-            menu_action(main_menu, UP);
+            menu_action(UP);
         }
         __delay_cycles(1000000);
         if((P3IN & BIT6) != 0)
         {
-            menu_action(main_menu, DOWN);
+            menu_action(DOWN);
         }
         __delay_cycles(1000000);
 

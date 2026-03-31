@@ -4,40 +4,58 @@
 #include "lcd_menu_system.h"
 
 static const char *ROW_INDICATOR = ">";
-
 static uint8_t current_row = 0;
 static uint8_t current_menu_item = 0;
 
-menu_sys lcd_menu = {main_menu, sizeof(main_menu)/sizeof(menu_item*)};
+// Global Menu State
+//menu_sys lcd_menu = {main_menu, sizeof(main_menu)/sizeof(menu_item*)};
+menu_sys lcd_menu = {ws2812b_menu, sizeof(ws2812b_menu)/sizeof(menu_item*)};
+
+// Shared Main Menu Return
+static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL};
 
 // MAIN MENU
-static menu_item main_screen = {"Main Screen", PREV_SCRN, NULL, };
-static menu_item window_size = {"Window Size", ENTRY, "05"};
+static menu_item main_screen = {"Main Screen", PREV_SCRN, NULL};
+static menu_item window_size = {"Window Size      ", ENTRY, "05"};
 static menu_item lcd_contrast = {"RTC Settings", SUBMENU, NULL};
 static menu_item ws2812b_color = {"WS2812B Color", SUBMENU, NULL};
-static menu_item cursor_on_off = {"Cursor On/Off", TOGGLE, NULL};
-static menu_item cursor_blink = {"Cursor Blink", TOGGLE, " ON  OFF "};
+static menu_item cursor_on_off = {"Cursor    ", TOGGLE, " ON [OFF]"};
+static menu_item cursor_blink = {"Blink     ", TOGGLE, " ON [OFF]"};
 menu_item *main_menu[MAIN_MENU_SIZE] = {&main_screen, &window_size, &lcd_contrast,
                                         &ws2812b_color, &cursor_on_off, &cursor_blink};
 
+// WS2812B COLOR MENU
+static menu_item red = {"Red             ", ENTRY, "255"};
+static menu_item green = {"Green           ", ENTRY, "000"};
+static menu_item blue = {"Blue            ", ENTRY, "255"};
+menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blue};
 
-static void menu_ui_update(menu_item **menu)
+static void menu_ui_update()
 {
     LCD_clear();
     uint8_t item, row;
     for(item = current_menu_item - current_row, row = 0; item <= current_menu_item - current_row + 3; item++, row++)
     {
+        // Placing the row indicator on the current row
         if(row == current_row)
         {
             LCD_set_cursor(0, row);
             LCD_write_string(ROW_INDICATOR);
         }
+        
+        // Writing menu item text
         LCD_set_cursor(1, row);
-        LCD_write_string(menu[item]->text_to_display);
+        LCD_write_string((lcd_menu.current_submenu)[item]->text_to_display);
+
+        // Writing menu item value
+        if((lcd_menu.current_submenu)[item]->value_to_display != NULL)
+        {
+            LCD_write_string((lcd_menu.current_submenu)[item]->value_to_display);
+        }
     }
 }
 
-void menu_action(menu_item **menu, char action)
+void menu_action(char action)
 {
     switch(action)
     {
@@ -57,19 +75,17 @@ void menu_action(menu_item **menu, char action)
                 else 
                 {
                     current_row = 3;
-                }
-                
+                }    
             }
             else 
             {
                 current_row++;
             }
             
-            menu_ui_update(menu);
+            menu_ui_update();
         }
         break;
     case UP:
-
         // Don't go past first menu item
         if (current_menu_item > 0)
         {
@@ -86,21 +102,22 @@ void menu_action(menu_item **menu, char action)
                 {
                     current_row = 0;
                 }
-
             }
             else 
             {
                 current_row--;
             }
         
-            menu_ui_update(menu);
+            menu_ui_update();
         }
         break;
     case PRESS:
+        /*
         if(menu[current_menu_item]->item_type == PREV_SCRN)
         {
 
         }
+        */
         break;
     }
     
