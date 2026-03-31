@@ -34,6 +34,9 @@ extern menu_sys lcd_menu;
 #define MAIN_MENU_SIZE 6
 extern menu_item *main_menu[MAIN_MENU_SIZE];
 
+#define RTC_MENU_SIZE 7
+extern menu_item *rtc_menu[RTC_MENU_SIZE];
+
 #define WS2812B_MENU_SIZE 4
 extern menu_item *ws2812b_menu[WS2812B_MENU_SIZE];
 

@@ -9,7 +9,7 @@ static uint8_t current_menu_item = 0;
 
 // Global Menu State
 //menu_sys lcd_menu = {main_menu, sizeof(main_menu)/sizeof(menu_item*)};
-menu_sys lcd_menu = {ws2812b_menu, sizeof(ws2812b_menu)/sizeof(menu_item*)};
+menu_sys lcd_menu = {rtc_menu, sizeof(rtc_menu)/sizeof(menu_item*)};
 
 // Shared Main Menu Return
 static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL};
@@ -23,6 +23,16 @@ static menu_item cursor_on_off = {"Cursor    ", TOGGLE, " ON [OFF]"};
 static menu_item cursor_blink = {"Blink     ", TOGGLE, " ON [OFF]"};
 menu_item *main_menu[MAIN_MENU_SIZE] = {&main_screen, &window_size, &lcd_contrast,
                                         &ws2812b_color, &cursor_on_off, &cursor_blink};
+
+// RTC MENU
+static menu_item year = {"Year             ", ENTRY, "26"};
+static menu_item month = {"Month            ", ENTRY, "04"};
+static menu_item date = {"Date             ", ENTRY, "01"};
+static menu_item hour = {"Hour             ", ENTRY, "10"};
+static menu_item minute = {"Minute           ", ENTRY, "00"};
+static menu_item second = {"Second           ", ENTRY, "00"};
+menu_item *rtc_menu[RTC_MENU_SIZE] = {&main_menu_ret, &year, &month,
+                                      &date, &hour, &minute, &second};
 
 // WS2812B COLOR MENU
 static menu_item red = {"Red             ", ENTRY, "255"};
