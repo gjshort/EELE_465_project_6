@@ -1,0 +1,317 @@
+#include <msp430fr2153.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+#include "utils.h"
+#include "rtc.h"
+#include "eUSCI.h"
+#include "led_bar.h"
+#include "led_pattern.h"
+
+const uint16_t TB1_500_MS  = 16384;
+const uint16_t TB1_50_MS = 1638;
+
+const uint16_t TB2_1_MS = 500;
+
+const uint16_t TB0_1_SEC  = 32768;
+const uint16_t TB0_750_MS = 24576;
+const uint16_t TB0_500_MS = 16384;
+const uint16_t TB0_250_MS = 8192;
+
+// Initialize main clk to 16MHz
+void init_CLK() {
+
+    FRCTL0 = FRCTLPW | NWAITS_1;
+    __bis_SR_register(SCG0);
+
+    CSCTL3 = SELREF__REFOCLK;
+    CSCTL1 = DCORSEL_5;
+    CSCTL2 = FLLD_0 + 487;
+    __delay_cycles(3);
+
+    __bic_SR_register(SCG0);
+    CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+
+}
+
+/**
+ * Interprets the UART message ID
+ * @param buf - buffer full of incoming UART data
+ * @return - UART message ID
+ * 
+ * Format: [id, ,{data}]
+ */
+char parse_uart_msg(char *buf)
+{
+    switch(buf[0])
+    {
+    case ID_TIME: 
+        return ID_TIME;
+        break;
+    case ID_WINDOW:
+        return ID_WINDOW;
+        break;
+    case ID_CONTRAST:
+        return ID_CONTRAST;
+    default:
+        return ID_ERR;
+        break;
+    }
+}
+
+/**
+ * Parses a message containing the time from UART
+ * @param rtc_time - pointer to a defined struct for the RTC
+ * @param buf - incoming UART message
+ *
+ * Format - [id, ,{data}] --> Data = HH:MM:SS MM/DD/YY\r\n\0
+ */
+void parse_uart_time_msg(char *buf, MCP7940N_time *rtc_time)
+{
+    char *token = strtok(buf + 2, ":");                 // Extract hours
+    rtc_time->hours = DECtoBCD((uint8_t)atoi(token));
+
+    token = strtok(NULL, ":");                          // Extract minutes
+    rtc_time->minutes = DECtoBCD((uint8_t)atoi(token));
+
+    token = strtok(NULL, " ");                          // Extract seconds
+    rtc_time->seconds = DECtoBCD((uint8_t)atoi(token)) | ST_BIT;
+
+    token = strtok(NULL, "/");                          // Extract month
+    rtc_time->month = DECtoBCD((uint8_t)atoi(token));
+
+    token = strtok(NULL, "/");                          // Extract day
+    rtc_time->date = DECtoBCD((uint8_t)atoi(token));
+
+    token = strtok(NULL, "\r");                          // Extract year
+    rtc_time->year = DECtoBCD((uint8_t)atoi(token));
+}
+
+/**
+ * Parses a message containing the temperature averaging
+ * window size from UART
+ * @param buf - incoming UART message
+ * @param lcd_contrast - pointer to variable holding window size
+ * 
+ * Format - [id, ,{data}] --> Data = [1:16]
+ */
+void parse_uart_window_msg(char *buf, uint8_t *temp_avg_window)
+{
+    char *token = strtok(buf + 2, "\r");
+    uint8_t window = (uint8_t)atoi(token);
+    if(window > 16)
+    {
+        window = 16;
+    }
+
+    *temp_avg_window = window;
+}
+
+/**
+ * Parses a message containing the LCD contrast from UART
+ * @param buf - incoming UART message
+ * @param lcd_contrast - pointer to variable holding contrast value
+ * 
+ * Format - [id, ,{data}] --> Data = [0:255]
+ */
+void parse_uart_contrast_msg(char *buf, uint8_t *lcd_contrast)
+{
+    char *token = strtok(buf + 2, "\r");
+    uint8_t contrast = (uint8_t)atoi(token);
+    *lcd_contrast = contrast;
+}
+
+/**
+ * Pack the given buffer with the RTC time in ASCII
+ * @param rtc_time - pointer to a defined struct for the RTC
+ * @param buf - buffer the time message will be written to.
+ *              MUST BE OF LENGTH 22 OR MORE. USER BEWARE.
+ *
+ * Format: "d HH:MM:SS MM/DD/YY\r\n\0"
+ *
+ */
+ void pack_time_buffer(MCP7940N_time *rtc_time, char *buf)
+ {
+    buf[0]  = ID_TIME;
+    buf[1]  = ' ';
+    buf[2]  = ((rtc_time->hours & 0x30) >> 4) + '0';      // strip 12/24hr mode bit
+    buf[3]  = (rtc_time->hours & 0x0F) + '0';
+    buf[4]  = ':';
+    buf[5]  = ((rtc_time->minutes & 0xF0) >> 4) + '0';
+    buf[6]  = (rtc_time->minutes & 0x0F) + '0';
+    buf[7]  = ':';
+    buf[8]  = ((rtc_time->seconds & 0x70) >> 4) + '0';    // Strip ST bit
+    buf[9]  = (rtc_time->seconds & 0x0F) + '0';
+    buf[10] = ' ';
+    buf[11] = ((rtc_time->month & 0x10) >> 4) + '0';      // Strip LPYR bit
+    buf[12] = (rtc_time->month & 0x0F) + '0';
+    buf[13] = '/';
+    buf[14] = ((rtc_time->date & 0x30) >> 4) + '0';
+    buf[15] = (rtc_time->date & 0x0F) + '0';
+    buf[16] = '/';
+    buf[17] = ((rtc_time->year & 0xF0) >> 4) + '0';
+    buf[18] = (rtc_time->year & 0x0F) + '0';
+    buf[19] = '\r';
+    buf[20] = '\n';
+    buf[21] = '\0';
+ }
+
+/**
+ * Pack the given buffer with the recent average temp. in ASCII
+ * @param temp_str - an ASCII string representation of the temp.
+ * @param buf - buffer the temp message will be written to.
+ * 
+ * Format: "c xxx.xxx\r\n\0" where xxx.xxx is a float in ASCII
+ */
+void pack_temp_buffer(char *temp_str, char *buf)
+{
+    buf[0] = ID_TEMP;
+    buf[1] = ' ';
+
+    // Copy over only necessary bytes from temp_str
+    uint8_t i = 2;
+    while(temp_str[i-2] != '\0')
+    {
+        buf[i] = temp_str[i-2];
+        i++;
+    }
+
+    buf[i++] = '\r';
+    buf[i++] = '\n';
+    buf[i]   = '\0';
+}
+
+/**
+ * Updates the A1 UART Tx Buffer with the next character 
+ * in the buffer holding the formatted message
+ * @param buf - buffer holding the formatted UART message
+ * @param tx_msg_idx - index of the next character to be written
+ *
+ * NO BOUNDS CHECKING. USER BEWARE
+ *
+ */
+void uart_tx_msg_data(char *buf, uint8_t tx_msg_idx)
+{
+    UCA1TXBUF = buf[tx_msg_idx];
+}
+
+/**
+ * Converts an 8-bit BCD number to an 8-bit unsigned int
+ * @param BCD - 8 bit value in BCD
+ * @return 8-bit unsinged integer represntation
+ */
+uint8_t BCDtoDEC(uint8_t BCD) {
+    return (uint8_t)( (BCD >> 4) * 10 + (BCD * 0x0F) );         // convert BCD to DEC
+}
+
+/**
+ * Converts an 8-bit unsigned int to an 8-bit BCD number
+ * @param DEC - 8 bit value in decimal
+ * @return 8-bit BCD represntation
+ */
+uint8_t DECtoBCD(uint8_t DEC) {
+    return (uint8_t)( (DEC / 10 << 4) | (DEC % 10) );           // convert DEC to BCD
+}
+
+/**
+ * Inits the A4 ADC input
+ */
+void init_adc_a4()
+{
+    P1SEL1 |= BIT4;
+    P1SEL0 |= BIT4;         // Set P1.4 to analog input
+    
+    //ADCCTL0
+    ADCCTL0 &= ~ADCSHT;     //Clear sample and hold timer
+    ADCCTL0 |= ADCSHT_2;    //16 ADCCLK cycles per sample
+    ADCCTL0 |= ADCON;       //Turn ADC on
+
+    //ADCCTL1
+    ADCCTL1 |= ADCSHP;      //Sample signal comes from sample timer
+    ADCCTL1 |= ADCSSEL_3;   //Use SMCLK (16 MHz) - divided by 32
+    ADCCTL1 |= ADCDIV_7;    // Divide by 8
+
+    //ADCCTL2
+    ADCCTL2 &= ~ADCRES;     //Clear resolution
+    ADCCTL2 |= ADCRES_2;    //Set to 12 bit resolution
+    ADCCTL2 |= ADCPDIV_1;   //Predivide by 4
+    
+    // ADC IRQ
+    ADCIFG &= ~ADCIFG0;     //Clear IRQ flag
+    ADCIE |= ADCIE0;        //Enable conversion completion IRQ
+}
+
+/**
+ * Writes an LED pattern to the anode data of an LED bar
+ * @param led_bar_pattern - main's instance of an LED pattern struct
+ * @param led_bar         - main's instance of an LED bar
+ * 
+ * Maps bits [11:8] to segment 0
+ * Maps bits [7:4]  to segment 1
+ * Maps bits [3:0]  to segment 2
+ */
+void led_bar_pat_to_anodes(volatile LED_PATTERN *led_bar_pattern, volatile LED_BAR *led_bar)
+{
+    led_bar->seg_data[0] = (uint8_t)(led_bar_pattern->pattern >> 8);
+    led_bar->seg_data[1] = (uint8_t)(led_bar_pattern->pattern >> 4);
+    led_bar->seg_data[2] = (uint8_t)(led_bar_pattern->pattern);
+}
+
+/**
+ * Advances the time register to be displayed
+ * on the LED bar.
+ * @param time - main's container of time data and reg. pointer
+ */
+void led_time_change_register(volatile LED_TIME *time)
+{
+    if(time->reg_num >= 5)
+    {
+        time->reg_num = 0;
+    }
+    else
+    {
+        time->reg_num++;
+    }
+}
+
+/**
+ * Writes a time register to the LED bar anodes
+ * @param led_bar - main's instance of the LED bar
+ * @param time - main's container of time data and reg. pointer
+ *
+ * Takes the data in the field pointed to by reg_num and
+ * packs it into the LED bar segment data.
+ */
+void led_time_to_anodes(volatile LED_BAR *led_bar, volatile LED_TIME *time)
+{
+    uint8_t seg1_data = 0, seg2_data = 0;
+    // Pull proper field
+    switch(time->reg_num)
+    {
+    case 0:
+        seg1_data = time->seconds;
+        break;
+    case 1:
+        seg1_data = time->minutes;
+        break;
+    case 2:
+        seg1_data = time->hours;
+        break;
+    case 3:
+        seg1_data = time->date;
+        break;
+    case 4:
+        seg1_data = time->month;
+        break;
+    case 5:
+        seg1_data = time->year;
+        break;
+    default:
+        seg1_data = 0;
+    }
+    seg2_data = (seg1_data & 0x0F);         // Strip lower 4 bits
+    seg1_data = (seg1_data & 0xF0) >> 4;    // Strip upper 4 bits
+
+    led_bar_update_anode_data(led_bar, 0, seg1_data, seg2_data);
+}

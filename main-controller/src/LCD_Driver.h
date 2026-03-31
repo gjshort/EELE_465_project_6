@@ -50,7 +50,6 @@ extern const char Customs[8][8];
 
 
 // Implicit funtion declarations
-void LCD_init();
 void LCD_set_pin_high(LCD_pin *p);
 void LCD_set_pin_low(LCD_pin *p);
 void LCD_pulse_enable();
