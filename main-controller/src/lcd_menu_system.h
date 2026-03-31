@@ -21,6 +21,8 @@ typedef struct menu_item
     const char *text_to_display;
     const char item_type;
     char *value_to_display;
+    struct menu_item **menu_link;
+    uint8_t menu_link_size;
 } menu_item;
 
 typedef struct menu_sys
@@ -31,7 +33,7 @@ typedef struct menu_sys
 
 extern menu_sys lcd_menu;
 
-#define MAIN_MENU_SIZE 6
+#define MAIN_MENU_SIZE 7
 extern menu_item *main_menu[MAIN_MENU_SIZE];
 
 #define RTC_MENU_SIZE 7

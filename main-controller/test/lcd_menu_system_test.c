@@ -49,6 +49,11 @@ int main(void)
             menu_action(DOWN);
         }
         __delay_cycles(1000000);
+        if((P3IN & BIT7) != 0)
+        {
+            menu_action(PRESS);
+        }
+        __delay_cycles(1000000);
 
     }
 

@@ -8,36 +8,36 @@ static uint8_t current_row = 0;
 static uint8_t current_menu_item = 0;
 
 // Global Menu State
-//menu_sys lcd_menu = {main_menu, sizeof(main_menu)/sizeof(menu_item*)};
-menu_sys lcd_menu = {rtc_menu, sizeof(rtc_menu)/sizeof(menu_item*)};
+menu_sys lcd_menu = {main_menu, sizeof(main_menu)/sizeof(menu_item*)};
 
 // Shared Main Menu Return
-static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL};
+static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL, main_menu, MAIN_MENU_SIZE};
 
 // MAIN MENU
-static menu_item main_screen = {"Main Screen", PREV_SCRN, NULL};
-static menu_item window_size = {"Window Size      ", ENTRY, "05"};
-static menu_item lcd_contrast = {"RTC Settings", SUBMENU, NULL};
-static menu_item ws2812b_color = {"WS2812B Color", SUBMENU, NULL};
-static menu_item cursor_on_off = {"Cursor    ", TOGGLE, " ON [OFF]"};
-static menu_item cursor_blink = {"Blink     ", TOGGLE, " ON [OFF]"};
-menu_item *main_menu[MAIN_MENU_SIZE] = {&main_screen, &window_size, &lcd_contrast,
+static menu_item main_screen = {"Main Screen", PREV_SCRN, NULL, NULL, 1};
+static menu_item window_size = {"Window Size      ", ENTRY, "05", NULL, 0};
+static menu_item lcd_contrast = {"LCD Contrast     ", ENTRY, "50", NULL, 0};
+static menu_item rtc_settings = {"RTC Settings", SUBMENU, NULL, rtc_menu, RTC_MENU_SIZE};
+static menu_item ws2812b_color = {"WS2812B Color", SUBMENU, NULL, ws2812b_menu, WS2812B_MENU_SIZE};
+static menu_item cursor_on_off = {"Cursor    ", TOGGLE, " ON [OFF]", NULL, 0};
+static menu_item cursor_blink = {"Blink     ", TOGGLE, " ON [OFF]", NULL, 0};
+menu_item *main_menu[MAIN_MENU_SIZE] = {&main_screen, &window_size, &lcd_contrast, &rtc_settings,
                                         &ws2812b_color, &cursor_on_off, &cursor_blink};
 
 // RTC MENU
-static menu_item year = {"Year             ", ENTRY, "26"};
-static menu_item month = {"Month            ", ENTRY, "04"};
-static menu_item date = {"Date             ", ENTRY, "01"};
-static menu_item hour = {"Hour             ", ENTRY, "10"};
-static menu_item minute = {"Minute           ", ENTRY, "00"};
-static menu_item second = {"Second           ", ENTRY, "00"};
+static menu_item year = {"Year             ", ENTRY, "26", NULL, 0};
+static menu_item month = {"Month            ", ENTRY, "04", NULL, 0};
+static menu_item date = {"Date             ", ENTRY, "01", NULL, 0};
+static menu_item hour = {"Hour             ", ENTRY, "10", NULL, 0};
+static menu_item minute = {"Minute           ", ENTRY, "00", NULL, 0};
+static menu_item second = {"Second           ", ENTRY, "00", NULL, 0};
 menu_item *rtc_menu[RTC_MENU_SIZE] = {&main_menu_ret, &year, &month,
                                       &date, &hour, &minute, &second};
 
 // WS2812B COLOR MENU
-static menu_item red = {"Red             ", ENTRY, "255"};
-static menu_item green = {"Green           ", ENTRY, "000"};
-static menu_item blue = {"Blue            ", ENTRY, "255"};
+static menu_item red = {"Red             ", ENTRY, "255", NULL, 0};
+static menu_item green = {"Green           ", ENTRY, "000", NULL, 0};
+static menu_item blue = {"Blue            ", ENTRY, "255", NULL, 0};
 menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blue};
 
 static void menu_ui_update()
@@ -122,12 +122,20 @@ void menu_action(char action)
         }
         break;
     case PRESS:
-        /*
-        if(menu[current_menu_item]->item_type == PREV_SCRN)
+        
+        switch((lcd_menu.current_submenu)[current_menu_item]->item_type)
         {
-
+        // Navigate to super- or submenu
+        case PREV_SCRN:
+        case SUBMENU:
+            lcd_menu.current_menu_size = (lcd_menu.current_submenu)[current_menu_item]->menu_link_size;
+            lcd_menu.current_submenu = (lcd_menu.current_submenu)[current_menu_item]->menu_link;
+            current_menu_item = 0;
+            current_row = 0;
+            menu_ui_update();
+            break;
         }
-        */
+
         break;
     }
     
