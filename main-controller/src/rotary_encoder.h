@@ -9,8 +9,16 @@
 
 #include <msp430fr2153.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #pragma once
+
+/**
+* Let main know these bad boys are in another c file 
+*/
+extern bool     rotary_CW;
+extern bool    rotary_CCW;
+extern bool rotary_switch;
 
 /**
 * Generic struct for port use
@@ -42,4 +50,5 @@ void rotary_pins_input_dwn(rotary_port *p);
 void init_rotary_A_B();
 void init_rotary_sw();
 void init_CLK();
-void poll_rotary(uint8_t cursor_col, uint8_t *cursor_row);
+void poll_rotary_rotation(uint8_t cursor_col, uint8_t *cursor_row);
+void poll_rotary_switch();

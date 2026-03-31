@@ -9,8 +9,17 @@
 
 #include <msp430fr2153.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include "LCD_Driver.h"
 #include "rotary_encoder.h"
+
+/**
+* Bool statements for rotary encoder rotation
+* and button press
+*/
+bool rotary_CW     = false;
+bool rotary_CCW    = false;
+bool rotary_switch = false;
 
 /**
 * A & B channel variables for polling 
@@ -87,7 +96,7 @@ void init_rotary_sw() {
 * rotation of rotary encoder and assign
 * dedicated outputs
 */
-void poll_rotary(uint8_t cursor_col, uint8_t *cursor_row) {
+void poll_rotary_rotation(uint8_t cursor_col, uint8_t *cursor_row) {
 
     /**
     * First we have to store the A & B channel states by reading
@@ -124,22 +133,36 @@ void poll_rotary(uint8_t cursor_col, uint8_t *cursor_row) {
     if((A_state_last == 0) && (A_state_current == 1)) {
 
         if(B_state_current == 1) {          // We just polled A, so if we went CW B channel should be a 1, 
-            if(*cursor_row < 2) {           // meaning we move the cursor down the LCD screen
-                (*cursor_row)++;
-            }
+            rotary_CW  = true;              // meaning we move the cursor down the LCD screen
+            rotary_CCW = false;
         } else {
-            if(*cursor_row > 0) {           // In the case B channel is a 0, that means we went CCW,
-                (*cursor_row)--;            // meaning we move the cursor up the LCD screen
-            }
+            rotary_CCW = true;              // In the case B channel is a 0, that means we went CCW,
+            rotary_CW  = false;             // meaning we move the cursor up the LCD screen
         }
 
-        LCD_set_cursor(cursor_col, *cursor_row);    // Immediately set cursor after polling
-
-        }
+    }
 
     A_state_last = A_state_current;         // Save previous poll value for next poll
 
+}
+
+/**
+* Poll rotary switch 
+*/
+void poll_rotary_switch() {
+
+    uint8_t switch_state;
+
+    switch_state = *(rotary_pins.sw.port_in);
+
+    switch_state = switch_state & rotary_pins.sw.bit_mask;
+
+
+    if(switch_state != 0) {
+        rotary_switch = true;
     }
+
+}
 
 /**
 * Init clock to 16MHz
