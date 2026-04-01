@@ -16,12 +16,13 @@
 
 int x;
 
- int main(void)
+int main(void)
 {
     // Stop the watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
 
     // Init
+    init_CLK();
     keypad_column_init();
     keypad_led_init();
     init_msp2310_timer();
@@ -39,6 +40,7 @@ int x;
 
         x = poll_keypad();
         if(x != 0) {
+            __delay_cycles(1500000);        // Padding delay for switch debounce
             UCA0TXBUF = x;
         }
 
