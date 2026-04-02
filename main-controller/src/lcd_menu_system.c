@@ -8,7 +8,7 @@ static uint8_t current_row = 0;
 static uint8_t current_menu_item = 0;
 
 // Global Menu State
-menu_sys lcd_menu = {main_menu, sizeof(main_menu)/sizeof(menu_item*)};
+menu_sys lcd_menu = {main_menu, MAIN_MENU_SIZE};
 
 // Shared Main Menu Return
 static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL, main_menu, MAIN_MENU_SIZE};
