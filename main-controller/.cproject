@@ -128,7 +128,7 @@
                         </toolChain>
                     </folderInfo>
                     <sourceEntries>
-                        <entry excluding="test/lcd_menu_system_test.c|test/rotary_encoder_test.c|test/project5_bring-up_test.c|src/main.c|test/dac_lcd_contrast_integration.c|test/dac_test.c|test/LCD_Driver_Functionality_Demo.c|test/lcd_ui_integration.c|test/lcd_ui_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="test/uART_Rx_from_msp2310_test.c|test/lcd_menu_system_test.c|test/project5_bring-up_test.c|src/main.c|test/dac_lcd_contrast_integration.c|test/dac_test.c|test/LCD_Driver_Functionality_Demo.c|test/lcd_ui_integration.c|test/lcd_ui_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                     </sourceEntries>
                 </configuration>
             </storageModule>
