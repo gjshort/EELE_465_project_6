@@ -6,6 +6,7 @@
 #include "RTC.h"
 #include "lcd_menu_system.h"
 #include "utils.h"
+#include "rotary_encoder.h"
 
 int main(void)
 {
@@ -17,6 +18,10 @@ int main(void)
 
     // LCD startup / init | 4-bit, 2-line operation for now
     LCD_init_4bit();
+
+    // Rotary Encoder
+    init_rotary_A_B();
+    init_rotary_sw();
 
     // Test time: 10:00:00, Thursday, Feb 19, 2026
     MCP7940N_time rtc_time = {0,0,0x10,0x05,0x20,0x05,0x26};
@@ -36,24 +41,31 @@ int main(void)
 
     LCD_home();
 
+    menu_action(NONE);
 
     while(1) 
     {
-        if((P3IN & BIT5) != 0)
-        {
-            menu_action(UP);
-        }
-        __delay_cycles(1000000);
-        if((P3IN & BIT6) != 0)
-        {
+
+        poll_rotary_rotation();
+        poll_rotary_switch();
+
+        if(rotary_CW) {
+            rotary_CW = false;
             menu_action(DOWN);
         }
-        __delay_cycles(1000000);
-        if((P3IN & BIT7) != 0)
-        {
-            menu_action(PRESS);
+
+        if(rotary_CCW) {
+            rotary_CCW = false;
+            menu_action(UP);
         }
-        __delay_cycles(1000000);
+
+        if(rotary_switch) {
+            rotary_switch = false;
+            menu_action(PRESS);
+            __delay_cycles(5000000);
+        }
+        
+        
 
     }
 

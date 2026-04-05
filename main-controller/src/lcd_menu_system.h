@@ -7,6 +7,7 @@
 #define DOWN 'd'
 #define UP 'u'
 #define PRESS 'p'
+#define NONE 'n'
 
 // Menu item types
 #define PREV_SCRN 'p'
@@ -20,7 +21,7 @@ typedef struct menu_item
 {
     const char *text_to_display;
     const char item_type;
-    char *value_to_display;
+    uint8_t value_to_display;
     struct menu_item **menu_link;
     uint8_t menu_link_size;
 } menu_item;
