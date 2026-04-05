@@ -251,29 +251,35 @@ int main(void)
         /**
         * Update LED stick color
         */
+
+            g = rand();
+            r = rand();
+            b = rand();
+
+            /*
             x++;
             __delay_cycles(2000000);        // debounce delay
 
             switch(x) {
-                case 1:     g = 55;
-                            r = 0;
-                            b = 0;
+                case 1:     g = 255;
+                            r = 100;
+                            b = 80;
                             break;
 
-                case 2:     g = 0;
-                            r = 55;
-                            b = 0;
+                case 2:     g = 255;
+                            r = 255;
+                            b = 255;
                             break;
 
-                case 3:     g = 0;
+                case 3:     g = 255;
                             r = 0;
-                            b = 55;
+                            b = 255;
                             x = 0;
                             break;
 
                 default:    break;
             }
-
+            */
         }
 
         // BUTTON - Change Pattern displayed on LED bar
