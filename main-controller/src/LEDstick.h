@@ -26,7 +26,7 @@ void StickFiller(u_char g, u_char r, u_char b);
 void stickColor_change();
 void colorStateSingle();
 void colorStateWhole();
-void potStick(uint16_t LEDpot);
+void potStick(uint16_t LEDpot, u_char g, u_char r, u_char b);
 
 /* References:   
 Citing for inspiration & useful how-to

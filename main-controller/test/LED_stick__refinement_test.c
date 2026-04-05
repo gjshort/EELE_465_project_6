@@ -1,3 +1,11 @@
+/**************************************
+* Author:   Gabe Story
+* Date:     04.04.2026
+* Class:    EELE 465
+* Purpose:  This is the test file for rework of the LED stick
+            potentiometer function intgrated with project 5 main.c
+
+************************************************************************/
 #include <msp430fr2153.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -80,7 +88,8 @@ int main(void)
     LEDpot = 0;
     u_char g = 0;
     u_char r = 0;
-    u_char b = 55;
+    u_char b = 0;
+    int x = 0;
     temp_adc_val = 0;
     half_sec_cnt = 0;
     cactus_count = 0;
@@ -237,9 +246,40 @@ int main(void)
             for (i = 5000; i > 0; i--) {}
         }
 
+        // Update LED stick color
+        if((P3IN & BIT6) != 0) {
+        /**
+        * Update LED stick color
+        */
+            x++;
+            __delay_cycles(2000000);        // debounce delay
+
+            switch(x) {
+                case 1:     g = 55;
+                            r = 0;
+                            b = 0;
+                            break;
+
+                case 2:     g = 0;
+                            r = 55;
+                            b = 0;
+                            break;
+
+                case 3:     g = 0;
+                            r = 0;
+                            b = 55;
+                            x = 0;
+                            break;
+
+                default:    break;
+            }
+
+        }
+
         // BUTTON - Change Pattern displayed on LED bar
         if((P3IN & BIT6) != 0 && is_pattern_change_button_low == true)
         {
+
             // Update LED bar data
             led_pat_change_pattern(&led_bar_pattern);
             led_bar_pat_to_anodes(&led_bar_pattern, &led_bar);
