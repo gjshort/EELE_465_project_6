@@ -26,3 +26,6 @@ typedef struct {
                 uint8_t  bit_mask;      // BITx select
 
 } msp2310_port;
+
+// --------------------------------------- IMPLICIT FUNCTION DECLARATIONS -----------------------------------------------
+void init_CLK();

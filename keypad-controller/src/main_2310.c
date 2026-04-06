@@ -1,10 +1,10 @@
 /****************************************
 *  Author:  Gabe Story
-*    Date:  03.27.2026
+*    Date:  03.31.2026
 *   Class:  EELE 465
-* Purpose:  This is the test file for uART sending
-            keypad scans to puTTY terminal
-            for the msp2310
+* Purpose:  This is the main file for uART sending
+            keypad scans from the msp2310
+            to the msp2513
 
 **************************************************************/
  #include <msp430fr2310.h>
@@ -40,7 +40,7 @@ int main(void)
 
         x = poll_keypad();
         if(x != 0) {
-            __delay_cycles(1500000);        // Padding delay for switch debounce
+            __delay_cycles(2000000);        // Padding delay for switch debounce
             UCA0TXBUF = x;
         }
 

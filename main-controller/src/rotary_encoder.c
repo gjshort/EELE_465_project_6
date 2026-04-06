@@ -163,21 +163,3 @@ void poll_rotary_switch() {
     }
 
 }
-
-/**
-* Init clock to 16MHz
-*/
-void init_CLK() {
-
-    FRCTL0 = FRCTLPW | NWAITS_1;
-    __bis_SR_register(SCG0);
-
-    CSCTL3 = SELREF__REFOCLK;
-    CSCTL1 = DCORSEL_5;
-    CSCTL2 = FLLD_0 + 487;
-    __delay_cycles(3);
-
-    __bic_SR_register(SCG0);
-    CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
-
-}

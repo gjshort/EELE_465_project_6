@@ -131,7 +131,7 @@ void keypad_led_toggle() {
 
 
     keypad_xor(&keypad_led_pin.keypad_blink);       // turn on
-    __delay_cycles(150000);                         // delay 0.25 seconds to see it
+    __delay_cycles(1000000);                        // delay to see LED toggle
     keypad_xor(&keypad_led_pin.keypad_blink);       // turn off
 
 }
