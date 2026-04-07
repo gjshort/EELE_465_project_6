@@ -4,7 +4,6 @@
 #include "lcd_menu_system.h"
 #include "my_float.h"
 
-static const char *ROW_INDICATOR = ">";
 static uint8_t current_row = 0;
 static uint8_t current_menu_item = 0;
 
@@ -43,6 +42,7 @@ menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blu
 
 static void menu_ui_update()
 {
+    const char *ROW_INDICATOR = ">";
     LCD_clear();
     uint8_t item, row;
     for(item = current_menu_item - current_row, row = 0; item <= current_menu_item - current_row + 3; item++, row++)
@@ -82,7 +82,8 @@ static void menu_ui_update()
     }
 }
 
-void menu_action(char action)
+// return 1 to poll keypad, 0 to not
+int menu_action(char action, uint8_t keypad_data)
 {
     switch(action)
     {
@@ -156,12 +157,21 @@ void menu_action(char action)
             menu_ui_update();
             break;
         case ENTRY:
+            return 1;
+            break;
         case NONE:
             menu_ui_update();
             break;
         }
 
         break;
+    case KEY_DATA:
+        // Lock in value from keypad
+        (lcd_menu.current_submenu)[current_menu_item]->value_to_display = keypad_data;
+        menu_ui_update();
+        break;
     }
+    
+    return 0;
     
 }

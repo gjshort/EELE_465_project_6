@@ -8,6 +8,7 @@
 #define UP 'u'
 #define PRESS 'p'
 #define NONE 'n'
+#define KEY_DATA 'k'
 
 // Menu item types
 #define PREV_SCRN 'p'
@@ -43,6 +44,6 @@ extern menu_item *rtc_menu[RTC_MENU_SIZE];
 #define WS2812B_MENU_SIZE 4
 extern menu_item *ws2812b_menu[WS2812B_MENU_SIZE];
 
-void menu_action(char action);
+int menu_action(char action, uint8_t keypad_data);
 
 #endif
