@@ -3,6 +3,7 @@
 #include "LCD_Driver.h"
 #include "lcd_menu_system.h"
 #include "my_float.h"
+#include <stdbool.h>
 
 static uint8_t current_row = 0;
 static uint8_t current_menu_item = 0;
@@ -15,8 +16,8 @@ static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL, main_menu, MAIN_
 
 // MAIN MENU
 static menu_item main_screen = {"Main Screen", PREV_SCRN, NULL, NULL, 1};
-static menu_item window_size = {"Window Size      ", ENTRY, 5, NULL, 0};
-static menu_item lcd_contrast = {"LCD Contrast     ", ENTRY, 50, NULL, 0};
+static menu_item window_size = {"Window Size     ", ENTRY, 5, NULL, 0};
+static menu_item lcd_contrast = {"LCD Contrast    ", ENTRY, 50, NULL, 0};
 static menu_item rtc_settings = {"RTC Settings", SUBMENU, NULL, rtc_menu, RTC_MENU_SIZE};
 static menu_item ws2812b_color = {"WS2812B Color", SUBMENU, NULL, ws2812b_menu, WS2812B_MENU_SIZE};
 static menu_item cursor_on_off = {"Cursor    ", TOGGLE, 0, NULL, 0};
@@ -166,10 +167,25 @@ int menu_action(char action, uint8_t keypad_data)
 
         break;
     case KEY_DATA:
+        {    
+        bool on_red = (lcd_menu.current_submenu)[current_menu_item] == &red;
+        bool on_green = (lcd_menu.current_submenu)[current_menu_item] == &green;
+        bool on_blue = (lcd_menu.current_submenu)[current_menu_item] == &blue;
+        bool on_contrast = (lcd_menu.current_submenu)[current_menu_item] == &lcd_contrast;
+        // These fields have width of 3;
+        if(!on_red && !on_green && !on_blue && !on_contrast)
+        {
+            if(keypad_data > 99)
+            {
+                keypad_data = 99;
+            }
+        }
+    
         // Lock in value from keypad
         (lcd_menu.current_submenu)[current_menu_item]->value_to_display = keypad_data;
         menu_ui_update();
         break;
+        }
     }
     
     return 0;
