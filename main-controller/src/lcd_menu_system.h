@@ -9,8 +9,10 @@
 #define PRESS 'p'
 #define NONE 'n'
 #define KEY_DATA 'k'
+#define ENTER 'e'
 
 // Menu item types
+#define MAIN_SCRN 'm'
 #define PREV_SCRN 'p'
 #define SUBMENU 's'
 #define ENTRY 'e'

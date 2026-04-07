@@ -15,7 +15,7 @@ menu_sys lcd_menu = {main_menu, MAIN_MENU_SIZE};
 static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL, main_menu, MAIN_MENU_SIZE};
 
 // MAIN MENU
-static menu_item main_screen = {"Main Screen", PREV_SCRN, NULL, NULL, 1};
+static menu_item main_screen = {"Main Screen", MAIN_SCRN, NULL, NULL, 1};
 static menu_item window_size = {"Window Size     ", ENTRY, 5, NULL, 0};
 static menu_item lcd_contrast = {"LCD Contrast    ", ENTRY, 50, NULL, 0};
 static menu_item rtc_settings = {"RTC Settings", SUBMENU, NULL, rtc_menu, RTC_MENU_SIZE};
@@ -83,7 +83,7 @@ static void menu_ui_update()
     }
 }
 
-// return 1 to poll keypad, 0 to not
+// return 1 to poll keypad, 2 to enter main screen
 int menu_action(char action, uint8_t keypad_data)
 {
     switch(action)
@@ -144,6 +144,10 @@ int menu_action(char action, uint8_t keypad_data)
         
         switch((lcd_menu.current_submenu)[current_menu_item]->item_type)
         {
+        case MAIN_SCRN:
+            return 2;
+            break;
+
         // Navigate to super- or submenu
         case PREV_SCRN:
         case SUBMENU:
@@ -164,8 +168,8 @@ int menu_action(char action, uint8_t keypad_data)
             menu_ui_update();
             break;
         }
-
         break;
+
     case KEY_DATA:
         {    
         bool on_red = (lcd_menu.current_submenu)[current_menu_item] == &red;
@@ -186,6 +190,15 @@ int menu_action(char action, uint8_t keypad_data)
         menu_ui_update();
         break;
         }
+
+    // Enter menu from main screen
+    case ENTER:
+        current_menu_item = 0;
+        current_row = 0;
+        lcd_menu.current_submenu = main_menu;
+        lcd_menu.current_menu_size = MAIN_MENU_SIZE;
+        menu_ui_update();
+        break;
     }
     
     return 0;
