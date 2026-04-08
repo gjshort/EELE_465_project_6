@@ -4,39 +4,65 @@
 #include <stdint.h>
 
 // Menu Actions
-#define DOWN 'd'
-#define UP 'u'
-#define PRESS 'p'
-#define NONE 'n'
-#define KEY_DATA 'k'
-#define ENTER 'e'
+#define DOWN 'd'        // Scroll Down
+#define UP 'u'          // Scroll Up
+#define PRESS 'p'       // Click on the menu item
+#define NONE 'n'        // Used for updating the display externally with no action
+#define KEY_DATA 'k'    // Update menu data with values given by keypad
+#define ENTER 'e'       // Enter the menu system from the main screen
 
 // Menu item types
-#define MAIN_SCRN 'm'
-#define PREV_SCRN 'p'
+#define MAIN_SCRN 'm'   // The main screen (not really a menu item)
+#define PREV_SCRN 'p'   // Changes the current menu to the previous/super menu
 #define SUBMENU 's'
-#define ENTRY 'e'
-#define TOGGLE 't'
+#define ENTRY 'e'       // Read/write a value from/to one of these items (ex: the RTC's month)
+#define TOGGLE 't'      // Toggle one of these items ON or OFF
 
 #define NULL 0
 
+/**
+ * Defines an item that will be added to a list in order to form a menu
+ */
 typedef struct menu_item
 {
+    // The text on the LHS of the screen
     const char *text_to_display;
+    
+    // Defines the behavior of the item during interaction
     const char item_type;
+
+    // The data associated with the menu item
     uint8_t value_to_display;
+
+    // Double pointer to another menu item.
+    // Mainly used to link together sub- and supermenus by pointing
+    // to the first item in a menu.
     struct menu_item **menu_link;
+
+    // Size of the menu being linked by the pointer above.
+    // Easily allows the system to bound scrolling when switching
+    // to a sub- or supermenu.
     uint8_t menu_link_size;
 } menu_item;
 
+/**
+ * Holds the data of the currently active menu. When switching
+ * to sub- or supermenus, the instance of this struct will be updated.
+ * Allows for generic display and traversal of a menu hierarchy
+ * as long as the sub- and supermenus are properly linked.
+ */
 typedef struct menu_sys
 {
     menu_item **current_submenu;
     uint8_t current_menu_size;
 } menu_sys;
 
+// We just need one menu hierarchy for our system.
+// Easier if it's global so we don't need to pass it
+// around everywhere in main.
 extern menu_sys lcd_menu;
 
+// We have 3 submenus in the hierarchy (see docs folder for details)
 #define MAIN_MENU_SIZE 7
 extern menu_item *main_menu[MAIN_MENU_SIZE];
 

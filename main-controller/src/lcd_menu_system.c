@@ -5,13 +5,13 @@
 #include "my_float.h"
 #include <stdbool.h>
 
-static uint8_t current_row = 0;
-static uint8_t current_menu_item = 0;
+static uint8_t current_row = 0;         // LCD row indicator number (0-3)
+static uint8_t current_menu_item = 0;   // The item we're actually on in the list
 
-// Global Menu State
+// Global menu hierarchy instance
 menu_sys lcd_menu = {main_menu, MAIN_MENU_SIZE};
 
-// Shared Main Menu Return
+// Shared Main Menu Return - all submenus branching off of Main Menu can return here.
 static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL, main_menu, MAIN_MENU_SIZE};
 
 // MAIN MENU
@@ -41,6 +41,12 @@ static menu_item green = {"Green           ", ENTRY, 000, NULL, 0};
 static menu_item blue = {"Blue            ", ENTRY, 255, NULL, 0};
 menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blue};
 
+/**
+ * Updates the LCD with the current visible state of the menu.
+ * - Sets the row indicator based on 'current_row'
+ * - Displays the proper number of items above and below the current item
+ * - Displays the value associated with the visible items if they have one
+ */
 static void menu_ui_update()
 {
     const char *ROW_INDICATOR = ">";
@@ -59,7 +65,7 @@ static void menu_ui_update()
         LCD_set_cursor(1, row);
         LCD_write_string((lcd_menu.current_submenu)[item]->text_to_display);
 
-        // Writing menu item value
+        // Writing menu item value for TOGGLE and ENTRY item types
         switch((lcd_menu.current_submenu)[item]->item_type)
         {
         case TOGGLE:
@@ -73,6 +79,7 @@ static void menu_ui_update()
             }
             break;
         case ENTRY:
+            // Converts numerical representation of value to ASCII for LCD
             {
             char value[4];
             ui8toa((uint16_t)(lcd_menu.current_submenu)[item]->value_to_display, value);
@@ -84,10 +91,17 @@ static void menu_ui_update()
 }
 
 // return 1 to poll keypad, 2 to enter main screen
+/**
+ * Modifies the contents of the menu hierarchy based on the action
+ * and the item type if relevant.
+ * @param action - the way in which the menu is being interacted with
+ * @param keypad_data - any incoming data from the keypad
+ */
 int menu_action(char action, uint8_t keypad_data)
 {
     switch(action)
     {
+    // See docs for details on scrolling behavior
     case DOWN:
         // Don't go past the last menu item
         if(current_menu_item < lcd_menu.current_menu_size - 1)
@@ -114,6 +128,8 @@ int menu_action(char action, uint8_t keypad_data)
             menu_ui_update();
         }
         break;
+
+    // "..."
     case UP:
         // Don't go past first menu item
         if (current_menu_item > 0)
@@ -140,15 +156,19 @@ int menu_action(char action, uint8_t keypad_data)
             menu_ui_update();
         }
         break;
+
+    // The menu item type defines the behavior of the menu
+    // when a 'press' input is received.
     case PRESS:
         
         switch((lcd_menu.current_submenu)[current_menu_item]->item_type)
         {
+        // Return to the main screen ("out of menu")
         case MAIN_SCRN:
             return 2;
             break;
 
-        // Navigate to super- or submenu
+        // Navigate to super- or submenu using the `menu_link` fields
         case PREV_SCRN:
         case SUBMENU:
             lcd_menu.current_menu_size = (lcd_menu.current_submenu)[current_menu_item]->menu_link_size;
@@ -157,26 +177,38 @@ int menu_action(char action, uint8_t keypad_data)
             current_row = 0;
             menu_ui_update();
             break;
+
+        // Toggles the value of the item. 0 = OFF, 1 = ON.
         case TOGGLE:
             (lcd_menu.current_submenu)[current_menu_item]->value_to_display ^= 1;
             menu_ui_update();
             break;
+
+        // Lets the caller know to start receiving keypad data.
+        // Typically followed by another call to this function
+        // with action 'KEY_DATA'.
         case ENTRY:
             return 1;
             break;
+
         case NONE:
             menu_ui_update();
             break;
         }
         break;
 
+    // Modifies the data held by menu items (usually of type ENTRY)
     case KEY_DATA:
         {    
+        // Setting max values so there is no overflow on LCD lines. These fields
+        // have a width of 3 (i.e., max of 255). 'value_to_display' field maxes
+        // out at 255, so no need to cap these ones.
         bool on_red = (lcd_menu.current_submenu)[current_menu_item] == &red;
         bool on_green = (lcd_menu.current_submenu)[current_menu_item] == &green;
         bool on_blue = (lcd_menu.current_submenu)[current_menu_item] == &blue;
         bool on_contrast = (lcd_menu.current_submenu)[current_menu_item] == &lcd_contrast;
-        // These fields have width of 3;
+
+        // All others have a width of 2 (i.e., max of 99).
         if(!on_red && !on_green && !on_blue && !on_contrast)
         {
             if(keypad_data > 99)
