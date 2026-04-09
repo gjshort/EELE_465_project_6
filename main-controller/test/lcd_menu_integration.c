@@ -157,9 +157,7 @@ int main(void)
 
     // UART
     init_eUSCI_A1_uart();
-    UCA1IFG &= ~UCRXIFG;
-    UCA1IE |= UCRXIE;
-    
+       
     // LCD startup / init | 4-bit, 2-line operation for now
     LCD_init_4bit();
     init_dac();
@@ -341,7 +339,7 @@ int main(void)
                 {
                     lcd_ui_write_date_time(&rtc_time);      // Update LCD
                 }
-        
+                menu_update_time_data(&rtc_time);
             }
             else                                        // Still reading
             {
@@ -469,7 +467,16 @@ int main(void)
                 
                 uint8_t keypad_data = (uint8_t)atoi(keypad_chars);
                 menu_action(KEY_DATA, keypad_data);
-                
+
+                // Update RTC
+                menu_get_time(&rtc_time);
+                rtc_verify_struct(&rtc_time);
+                rtc_mode = I2C_WRITE;
+                write_to_rtc = true;
+
+                // Update Contrast
+                lcd_contrast = menu_get_contrast();
+                dac_write(lcd_contrast);
 
                 // Zero-out Rx Buffer
                 uint8_t i;
@@ -477,6 +484,8 @@ int main(void)
                 {
                     keypad_chars[i] = '\0';
                 }
+
+                UCA1IE &= ~UCRXIE;
             }
             else 
             {
@@ -518,6 +527,8 @@ int main(void)
                 {
                 case 1:
                     rx_keypad = true;
+                    UCA1IFG &= ~UCRXIFG;
+                    UCA1IE |= UCRXIE;
                     break;
                 case 2:
                     on_main_screen = true;
@@ -533,7 +544,6 @@ int main(void)
             else
             {
                 menu_action(ENTER, 0); 
-                menu_update_time_data(&rtc_time);
                 on_main_screen = false;
             }
             
@@ -608,11 +618,16 @@ __interrupt void ISR_TB1_CCR0(void)
         cactus_count = 0;
         update_cactus = true;
 
+    }
+
+    // Trigger every 250 ms
+    half_sec_cnt++;
+    if(half_sec_cnt == 5)
+    {
         poll_rotary = true;
     }
 
     // Trigger every 0.5 seconds
-    half_sec_cnt++;
     if(half_sec_cnt >= 10)
     {
         half_sec_cnt = 0;

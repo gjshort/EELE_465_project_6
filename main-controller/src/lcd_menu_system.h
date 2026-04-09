@@ -61,5 +61,7 @@ typedef struct menu_sys
 int menu_action(char action, uint8_t keypad_data);
 uint8_t menu_get_window_size();
 void menu_update_time_data(MCP7940N_time *rtc_time);
+void menu_get_time(MCP7940N_time *rtc_time);
+uint8_t menu_get_contrast();
 
 #endif

@@ -272,3 +272,18 @@ void menu_update_time_data(MCP7940N_time *rtc_time)
     date.value_to_display   = BCDtoDEC(rtc_time->date & 0x3F);
     year.value_to_display   = BCDtoDEC(rtc_time->year);
 }
+
+void menu_get_time(MCP7940N_time *rtc_time)
+{
+    rtc_time->hours = DECtoBCD(hour.value_to_display);
+    rtc_time->minutes = DECtoBCD(minute.value_to_display);
+    rtc_time->seconds = DECtoBCD(second.value_to_display) | ST_BIT;
+    rtc_time->month = DECtoBCD(month.value_to_display);
+    rtc_time->date = DECtoBCD(date.value_to_display);
+    rtc_time->year = DECtoBCD(year.value_to_display);
+}
+
+uint8_t menu_get_contrast()
+{
+    return lcd_contrast.value_to_display;
+}
