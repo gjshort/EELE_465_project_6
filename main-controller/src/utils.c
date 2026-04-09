@@ -202,7 +202,7 @@ void uart_tx_msg_data(char *buf, uint8_t tx_msg_idx)
  * @return 8-bit unsinged integer represntation
  */
 uint8_t BCDtoDEC(uint8_t BCD) {
-    return (uint8_t)( (BCD >> 4) * 10 + (BCD * 0x0F) );         // convert BCD to DEC
+    return (uint8_t)( (BCD >> 4) * 10 + (BCD & 0x0F) );         // convert BCD to DEC
 }
 
 /**

@@ -251,12 +251,19 @@ int menu_action(char action, uint8_t keypad_data)
     
 }
 
-uint8_t menu_window_size()
+/**
+ * Returns the current temp. averaging window
+ * size value stored in the menu item.
+ */
+uint8_t menu_get_window_size()
 {
     return window_size.value_to_display;
 }
 
-uint8_t menu_update_time_data(MCP7940N_time *rtc_time)
+/**
+ * Sets the time and date values in the RTC menu.
+ */
+void menu_update_time_data(MCP7940N_time *rtc_time)
 {
     hour.value_to_display   = BCDtoDEC(rtc_time->hours & 0x3F);     // Strip 12/24 hr bit
     minute.value_to_display = BCDtoDEC(rtc_time->minutes);

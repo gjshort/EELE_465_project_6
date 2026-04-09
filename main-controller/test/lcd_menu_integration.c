@@ -411,7 +411,7 @@ int main(void)
             // Add new value to ring buf, re-average the buffer with
             // a specified window and then convert avg. to string
             ring_buf_push(&temp_buf, lmt87_temp);
-            temp_avg_window = menu_window_size();
+            temp_avg_window = menu_get_window_size();
             lmt87_temp_avg = ring_buf_average(&temp_buf, temp_avg_window);
 
             // Clear string buffer then put new avg. temp into it in ASCII
@@ -469,6 +469,7 @@ int main(void)
                 
                 uint8_t keypad_data = (uint8_t)atoi(keypad_chars);
                 menu_action(KEY_DATA, keypad_data);
+                
 
                 // Zero-out Rx Buffer
                 uint8_t i;
