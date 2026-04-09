@@ -35,9 +35,9 @@ static menu_item *rtc_menu[RTC_MENU_SIZE] = {&main_menu_ret, &year, &month,
                                             &date, &hour, &minute, &second};
 
 // WS2812B COLOR MENU
-static menu_item red = {"Red             ", ENTRY, 255, NULL, 0};
-static menu_item green = {"Green           ", ENTRY, 000, NULL, 0};
-static menu_item blue = {"Blue            ", ENTRY, 255, NULL, 0};
+static menu_item red = {"Red             ", ENTRY, 110, NULL, 0};
+static menu_item green = {"Green           ", ENTRY, 140, NULL, 0};
+static menu_item blue = {"Blue            ", ENTRY, 0, NULL, 0};
 static menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blue};
 
 // MAIN MENU
@@ -286,4 +286,11 @@ void menu_get_time(MCP7940N_time *rtc_time)
 uint8_t menu_get_contrast()
 {
     return lcd_contrast.value_to_display;
+}
+
+void menu_get_rgb(uint8_t *r, uint8_t *g, uint8_t *b)
+{
+    *r = red.value_to_display;
+    *g = green.value_to_display;
+    *b = blue.value_to_display;
 }

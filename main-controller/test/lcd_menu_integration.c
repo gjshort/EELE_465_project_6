@@ -129,6 +129,11 @@ int main(void)
                                     .pattern_dir = 0,
                                     .pattern = 0x0AAA };
 
+    // LED Stick
+    uint8_t led_stick_g = 140;
+    uint8_t led_stick_r = 110;
+    uint8_t led_stick_b = 0;
+
     // Buttons
     bool is_pattern_change_button_low = true;
     bool is_color_change_button_low = true;
@@ -444,7 +449,7 @@ int main(void)
         if(is_slide_adc_done)
         {
             // Change LED Stick level and update LCD
-            potStick(LEDpot);
+            potStick(LEDpot, led_stick_g, led_stick_r, led_stick_b);
             if(on_main_screen)
             {
                 lcd_ui_write_period(TB0CCR0 / (float)TB0_1_SEC);
@@ -477,6 +482,9 @@ int main(void)
                 // Update Contrast
                 lcd_contrast = menu_get_contrast();
                 dac_write(lcd_contrast);
+
+                // Update LED Stick Colors
+                menu_get_rgb(&led_stick_r, &led_stick_g, &led_stick_b);
 
                 // Zero-out Rx Buffer
                 uint8_t i;
