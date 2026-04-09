@@ -485,23 +485,27 @@ int main(void)
 
 
         // --------------------- MENU SYS INTERACTION --------------------
+        
+        // Poll rotary switch
         if(poll_rotary)
         {
             poll_rotary = false;
-            poll_rotary_rotation();
             poll_rotary_switch();
         }
         
+        // Scroll down
         if(rotary_CW && !rx_keypad && !on_main_screen) {
             rotary_CW = false;
             menu_action(DOWN, 0);
         }
 
+        // Scroll Up
         if(rotary_CCW && !rx_keypad && !on_main_screen) {
             rotary_CCW = false;
             menu_action(UP, 0);
         }
 
+        // Rotary Switch
         if(rotary_switch && !rx_keypad) {
             rotary_switch = false;
             if(!on_main_screen)
@@ -513,6 +517,7 @@ int main(void)
                     break;
                 case 2:
                     on_main_screen = true;
+                    LCD_clear();
                     lcd_ui_write_pattern(led_bar_pattern.pattern_num);
                     lcd_ui_write_period(TB0CCR0 / (float)TB0_1_SEC);
                     lcd_ui_write_temp(lmt87_temp_avg);
@@ -540,6 +545,25 @@ int main(void)
 // -----------------------------------------------------------
 // ------------------------ ISRs -----------------------------
 // -----------------------------------------------------------
+
+// Rotary encoder spin ISR (Pin A rising edge)
+#pragma vector = PORT3_VECTOR
+__interrupt void ROTARY_SPIN_ISR()
+{
+    // If B is low, go CW
+    if((P3IN & BIT1) == 0)
+    {
+        rotary_CW = true;
+        rotary_CCW = false;
+    }
+    else 
+    {
+        rotary_CW = false;
+        rotary_CCW = true;
+    }
+    
+    P3IFG &= ~BIT0;
+}
 
 // ADC conversion ISR
 #pragma vector = ADC_VECTOR
