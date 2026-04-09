@@ -411,6 +411,7 @@ int main(void)
             // Add new value to ring buf, re-average the buffer with
             // a specified window and then convert avg. to string
             ring_buf_push(&temp_buf, lmt87_temp);
+            temp_avg_window = menu_window_size();
             lmt87_temp_avg = ring_buf_average(&temp_buf, temp_avg_window);
 
             // Clear string buffer then put new avg. temp into it in ASCII
@@ -461,6 +462,7 @@ int main(void)
             uart_rx_irq = false;
             if(UCA1RXBUF == '#')
             {
+                // Null terminate value
                 keypad_chars[uart_rx_msg_idx] = '\0';
                 uart_rx_msg_idx = 0;
                 rx_keypad = false;
@@ -477,6 +479,7 @@ int main(void)
             }
             else 
             {
+                // store received char
                 keypad_chars[uart_rx_msg_idx] = UCA1RXBUF;
                 uart_rx_msg_idx++;
             }
@@ -529,6 +532,7 @@ int main(void)
             else
             {
                 menu_action(ENTER, 0); 
+                menu_update_time_data(&rtc_time);
                 on_main_screen = false;
             }
             
