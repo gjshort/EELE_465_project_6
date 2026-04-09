@@ -44,7 +44,11 @@
 
 ![Menu_state_digram](menu_state_diagram.svg)
 
+### Menu Software Structure
 
+- Linked list of "menu items" comprise a "menu"
+- Every menu item is an instance of a struct `menu_item`.
+- The fields of the menu item determine how it will behave when the rotary encoder button is pushed.
 
 
 

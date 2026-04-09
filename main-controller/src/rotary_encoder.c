@@ -96,7 +96,7 @@ void init_rotary_sw() {
 * rotation of rotary encoder and assign
 * dedicated outputs
 */
-void poll_rotary_rotation(uint8_t cursor_col, uint8_t *cursor_row) {
+void poll_rotary_rotation() {
 
     /**
     * First we have to store the A & B channel states by reading

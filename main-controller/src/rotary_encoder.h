@@ -49,5 +49,5 @@ void rotary_pins_input_up(rotary_port *p);
 void rotary_pins_input_dwn(rotary_port *p);
 void init_rotary_A_B();
 void init_rotary_sw();
-void poll_rotary_rotation(uint8_t cursor_col, uint8_t *cursor_row);
+void poll_rotary_rotation();
 void poll_rotary_switch();

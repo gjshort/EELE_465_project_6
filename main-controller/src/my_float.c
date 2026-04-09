@@ -107,7 +107,7 @@ void ui8toa(uint8_t data, char result [4])
     }
 
     // Reverse, then push digits to buffer
-    uint8_t rev_num = (uint8_t)reverse_digits((uint16_t)data);
+    uint16_t rev_num = reverse_digits((uint16_t)data);
     while(rev_num > 0)
     {
         result[digit_idx++] = (rev_num % 10) + '0';
@@ -117,12 +117,6 @@ void ui8toa(uint8_t data, char result [4])
     // Handle case when one's place is 0 and
     // reversing number removes it
     if(data % 10 == 0)
-    {
-        result[digit_idx++] = '0';
-    }
-
-    // 0 --> "00" for our use case
-    if(data == 0)
     {
         result[digit_idx++] = '0';
     }
