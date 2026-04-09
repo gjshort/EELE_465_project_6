@@ -548,6 +548,24 @@ int main(void)
                     lcd_ui_write_window(temp_avg_window);
                     break;
                 }
+
+                // Update Cursor
+                if(menu_get_cursor())
+                {
+                    if(menu_get_blink())
+                    {
+                        LCD_cursor_blink();
+                    }
+                    else 
+                    {
+                        LCD_cursor_no_blink();
+                    }
+                }
+                else
+                {
+                    LCD_cursor_off();
+                }
+
             }
             else
             {

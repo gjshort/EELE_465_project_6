@@ -294,3 +294,13 @@ void menu_get_rgb(uint8_t *r, uint8_t *g, uint8_t *b)
     *g = green.value_to_display;
     *b = blue.value_to_display;
 }
+
+uint8_t menu_get_cursor()
+{
+    return cursor_on_off.value_to_display;
+}
+
+uint8_t menu_get_blink()
+{
+    return cursor_blink.value_to_display;
+}
