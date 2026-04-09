@@ -40,14 +40,15 @@ typedef enum {
     Custom_TinyCactus       = 1,
     Custom_Dash             = 2,
     Custom_TinyCactus_down  = 3,
-    Custom_Cactus_down      = 4
-    // ...
+    Custom_Cactus_down      = 4,
+    Custom_Brace            = 5,
+    Custom_Queen            = 6,
+    Custom_Indicator        = 7
 
 } LCD_Custom_Chars;
 
 // Let main know we have a 2-D array in another .c file.
 extern const char Customs[8][8];
-
 
 // Implicit funtion declarations
 void LCD_set_pin_high(LCD_pin *p);
@@ -67,5 +68,5 @@ void LCD_set_cursor(uint8_t col, uint8_t row);
 void LCD_type_char(char c);
 void LCD_write_string(const char *s);
 void LCD_write_string_here(uint8_t col, uint8_t row, const char *s);
-void LCD_custom_char(char address, const char *custom_map);
-void LCD_load_multiple_chars(const char Customs_CGRAM[][8], uint8_t addr_nmbr);
+extern void LCD_custom_char(char address, const char *custom_map);
+extern void LCD_load_multiple_chars(const char Customs_CGRAM[][8], uint8_t addr_nmbr);

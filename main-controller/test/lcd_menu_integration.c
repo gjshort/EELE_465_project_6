@@ -187,7 +187,7 @@ int main(void)
     lcd_ui_write_window(temp_avg_window);
 
     // LCD Custom characters
-    LCD_load_multiple_chars(Customs, 5);
+    LCD_load_multiple_chars(Customs, 8);
     LCD_home();
 
     while(1) 

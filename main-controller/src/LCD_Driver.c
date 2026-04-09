@@ -344,18 +344,41 @@ const char Customs[8][8] = {
 
     },
 
-    // Custom #4: Dash, see bit image below
+    // Custom #5: Toggle braces, see bit image below
     {
         0x00,       // 0b00000
-        0x00,       // 0b00000
-        0x00,       // 0b00000
-        0xFF,       // 0b11111
-        0x00,       // 0b00000
-        0x00,       // 0b00000
-        0x00,       // 0b00000
-        0x00,       // 0b00000
-    }
+        0x1B,       // 0b11011
+        0x15,       // 0b10101    
+        0x0E,       // 0b01110
+        0x0E,       // 0b01110
+        0x15,       // 0b10101
+        0x1B,       // 0b11011
+        0x00        // 0b00000
+    },
 
+    // Custom #6: Queen chess piece, see bit image below
+    {
+        0x04,       // 0b00100
+        0x1F,       // 0b11111
+        0x0E,       // 0b01110
+        0x04,       // 0b00100
+        0x04,       // 0b00100
+        0x04,       // 0b00100
+        0x0E,       // 0b01110
+        0x1F        // 0b11111
+    },
+
+    // Custom #7, Indicator, see bit image below
+    {
+        0x00,       // 0b00000
+        0x04,       // 0b00100
+        0x04,       // 0b00100
+        0x1B,       // 0b11011
+        0x04,       // 0b00100
+        0x04,       // 0b00100
+        0x00,       // 0b00000
+        0x00        // 0b00000
+    }
     
     // Here you would make more... up to 8 and update enum struct in header file accordingly.
     // ...
@@ -363,7 +386,7 @@ const char Customs[8][8] = {
 };
 
 // Load custom char into CGRAM, write to CGRAM address
-void LCD_custom_char(char address, const char *custom_map) {
+extern void LCD_custom_char(char address, const char *custom_map) {
 
     LCD_cmd(0x40 | (address << 3));         // go to CGRAM memory, address 0
 
@@ -375,7 +398,7 @@ void LCD_custom_char(char address, const char *custom_map) {
 }
 
 // Helper function to laod multiple custom chars at once.
-void LCD_load_multiple_chars(const char Customs_CGRAM[][8], uint8_t addr_nmbr) {
+extern void LCD_load_multiple_chars(const char Customs_CGRAM[][8], uint8_t addr_nmbr) {
 
     if(addr_nmbr > 8) {
         addr_nmbr = 8;          // CGRAM safety net, can not store > 8 custom chars

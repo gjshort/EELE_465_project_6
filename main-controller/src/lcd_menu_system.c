@@ -22,7 +22,7 @@ static menu_item *rtc_menu[RTC_MENU_SIZE];
 static menu_sys lcd_menu = {main_menu, MAIN_MENU_SIZE};
 
 // Shared Main Menu Return - all submenus branching off of Main Menu can return here.
-static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL, main_menu, MAIN_MENU_SIZE};
+static menu_item main_menu_ret = {"\x06 Main Menu", PREV_SCRN, NULL, main_menu, MAIN_MENU_SIZE};
 
 // RTC MENU
 static menu_item year = {"Year             ", ENTRY, 26, NULL, 0};
@@ -41,7 +41,7 @@ static menu_item blue = {"Blue            ", ENTRY, 0, NULL, 0};
 static menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blue};
 
 // MAIN MENU
-static menu_item main_screen = {"Main Screen", MAIN_SCRN, NULL, NULL, 1};
+static menu_item main_screen = {"\x06 Main Screen", MAIN_SCRN, NULL, NULL, 1};
 static menu_item window_size = {"Window Size     ", ENTRY, 5, NULL, 0};
 static menu_item lcd_contrast = {"LCD Contrast    ", ENTRY, 50, NULL, 0};
 static menu_item rtc_settings = {"RTC Settings", SUBMENU, NULL, rtc_menu, RTC_MENU_SIZE};
@@ -59,7 +59,7 @@ static menu_item *main_menu[MAIN_MENU_SIZE] = {&main_screen, &window_size, &lcd_
  */
 static void menu_ui_update()
 {
-    const char *ROW_INDICATOR = ">";
+    const char *ROW_INDICATOR = "\x07";
     LCD_clear();
     uint8_t item, row;
     for(item = current_menu_item - current_row, row = 0; item <= current_menu_item - current_row + 3; item++, row++)
@@ -81,11 +81,11 @@ static void menu_ui_update()
         case TOGGLE:
             if((lcd_menu.current_submenu)[item]->value_to_display == 1)
             {
-                LCD_write_string("[ON] OFF ");
+                LCD_write_string("\x05ON\x05 OFF ");        /** '\x05' == Custom_Brace @file LCD_Driver.h */
             }
             else
             {
-                LCD_write_string(" ON [OFF]");
+                LCD_write_string(" ON \x05OFF\x05");        /** ..  */
             }
             break;
         case ENTRY:
