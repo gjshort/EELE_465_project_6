@@ -262,6 +262,7 @@ uint8_t menu_get_window_size()
 
 /**
  * Sets the time and date values in the RTC menu.
+ * @param rtc_time - pointer to an instance of an RTC struct
  */
 void menu_update_time_data(MCP7940N_time *rtc_time)
 {
@@ -273,6 +274,10 @@ void menu_update_time_data(MCP7940N_time *rtc_time)
     year.value_to_display   = BCDtoDEC(rtc_time->year);
 }
 
+/**
+ * Gets the time stored in the menu system
+ * @param rtc_time - pointer to an instance of an RTC struct
+ */
 void menu_get_time(MCP7940N_time *rtc_time)
 {
     rtc_time->hours = DECtoBCD(hour.value_to_display);
@@ -283,11 +288,20 @@ void menu_get_time(MCP7940N_time *rtc_time)
     rtc_time->year = DECtoBCD(year.value_to_display);
 }
 
+/**
+ * Returns the LCD contrast stored in the menu
+ */
 uint8_t menu_get_contrast()
 {
     return lcd_contrast.value_to_display;
 }
 
+/**
+ * Gets the RGB values stored in the menu
+ * @param r - pointer to a value where Red is returned
+ * @param g - pointer to a value where Green is returned
+ * @param b - pointer to a value where Blue is returned
+ */
 void menu_get_rgb(uint8_t *r, uint8_t *g, uint8_t *b)
 {
     *r = red.value_to_display;
@@ -295,11 +309,17 @@ void menu_get_rgb(uint8_t *r, uint8_t *g, uint8_t *b)
     *b = blue.value_to_display;
 }
 
+/**
+ * Returns the state of the menu's cursor enable option
+ */
 uint8_t menu_get_cursor()
 {
     return cursor_on_off.value_to_display;
 }
 
+/**
+ * Returns the state of the menu's cursor blink option
+ */
 uint8_t menu_get_blink()
 {
     return cursor_blink.value_to_display;
