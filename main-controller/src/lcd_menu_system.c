@@ -4,26 +4,25 @@
 #include "lcd_menu_system.h"
 #include "my_float.h"
 #include <stdbool.h>
+#include "RTC.h"
+#include "utils.h"
+
+#define MAIN_MENU_SIZE 7
+#define RTC_MENU_SIZE 7
+#define WS2812B_MENU_SIZE 4
 
 static uint8_t current_row = 0;         // LCD row indicator number (0-3)
 static uint8_t current_menu_item = 0;   // The item we're actually on in the list
 
-// Global menu hierarchy instance
-menu_sys lcd_menu = {main_menu, MAIN_MENU_SIZE};
+// Menu hierarchy instances
+static menu_item *main_menu[MAIN_MENU_SIZE];
+static menu_item *ws2812b_menu[WS2812B_MENU_SIZE];
+static menu_item *rtc_menu[RTC_MENU_SIZE];
+
+static menu_sys lcd_menu = {main_menu, MAIN_MENU_SIZE};
 
 // Shared Main Menu Return - all submenus branching off of Main Menu can return here.
-static menu_item main_menu_ret = {"Main Menu", PREV_SCRN, NULL, main_menu, MAIN_MENU_SIZE};
-
-// MAIN MENU
-static menu_item main_screen = {"Main Screen", MAIN_SCRN, NULL, NULL, 1};
-static menu_item window_size = {"Window Size     ", ENTRY, 5, NULL, 0};
-static menu_item lcd_contrast = {"LCD Contrast    ", ENTRY, 50, NULL, 0};
-static menu_item rtc_settings = {"RTC Settings", SUBMENU, NULL, rtc_menu, RTC_MENU_SIZE};
-static menu_item ws2812b_color = {"WS2812B Color", SUBMENU, NULL, ws2812b_menu, WS2812B_MENU_SIZE};
-static menu_item cursor_on_off = {"Cursor    ", TOGGLE, 0, NULL, 0};
-static menu_item cursor_blink = {"Blink     ", TOGGLE, 0, NULL, 0};
-menu_item *main_menu[MAIN_MENU_SIZE] = {&main_screen, &window_size, &lcd_contrast, &rtc_settings,
-                                        &ws2812b_color, &cursor_on_off, &cursor_blink};
+static menu_item main_menu_ret = {"\x06 Main Menu", PREV_SCRN, NULL, main_menu, MAIN_MENU_SIZE};
 
 // RTC MENU
 static menu_item year = {"Year             ", ENTRY, 26, NULL, 0};
@@ -32,14 +31,25 @@ static menu_item date = {"Date             ", ENTRY, 01, NULL, 0};
 static menu_item hour = {"Hour             ", ENTRY, 10, NULL, 0};
 static menu_item minute = {"Minute           ", ENTRY, 00, NULL, 0};
 static menu_item second = {"Second           ", ENTRY, 00, NULL, 0};
-menu_item *rtc_menu[RTC_MENU_SIZE] = {&main_menu_ret, &year, &month,
-                                      &date, &hour, &minute, &second};
+static menu_item *rtc_menu[RTC_MENU_SIZE] = {&main_menu_ret, &year, &month,
+                                            &date, &hour, &minute, &second};
 
 // WS2812B COLOR MENU
-static menu_item red = {"Red             ", ENTRY, 255, NULL, 0};
-static menu_item green = {"Green           ", ENTRY, 000, NULL, 0};
-static menu_item blue = {"Blue            ", ENTRY, 255, NULL, 0};
-menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blue};
+static menu_item red = {"Red             ", ENTRY, 110, NULL, 0};
+static menu_item green = {"Green           ", ENTRY, 140, NULL, 0};
+static menu_item blue = {"Blue            ", ENTRY, 0, NULL, 0};
+static menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blue};
+
+// MAIN MENU
+static menu_item main_screen = {"\x06 Main Screen", MAIN_SCRN, NULL, NULL, 1};
+static menu_item window_size = {"Window Size     ", ENTRY, 5, NULL, 0};
+static menu_item lcd_contrast = {"LCD Contrast    ", ENTRY, 50, NULL, 0};
+static menu_item rtc_settings = {"RTC Settings", SUBMENU, NULL, rtc_menu, RTC_MENU_SIZE};
+static menu_item ws2812b_color = {"WS2812B Color", SUBMENU, NULL, ws2812b_menu, WS2812B_MENU_SIZE};
+static menu_item cursor_on_off = {"Cursor    ", TOGGLE, 0, NULL, 0};
+static menu_item cursor_blink = {"Blink     ", TOGGLE, 0, NULL, 0};
+static menu_item *main_menu[MAIN_MENU_SIZE] = {&main_screen, &window_size, &lcd_contrast, &rtc_settings,
+                                               &ws2812b_color, &cursor_on_off, &cursor_blink};
 
 /**
  * Updates the LCD with the current visible state of the menu.
@@ -49,7 +59,7 @@ menu_item *ws2812b_menu[WS2812B_MENU_SIZE] = {&main_menu_ret, &red, &green, &blu
  */
 static void menu_ui_update()
 {
-    const char *ROW_INDICATOR = ">";
+    const char *ROW_INDICATOR = "\x07";
     LCD_clear();
     uint8_t item, row;
     for(item = current_menu_item - current_row, row = 0; item <= current_menu_item - current_row + 3; item++, row++)
@@ -71,11 +81,11 @@ static void menu_ui_update()
         case TOGGLE:
             if((lcd_menu.current_submenu)[item]->value_to_display == 1)
             {
-                LCD_write_string("[ON] OFF ");
+                LCD_write_string("\x05ON\x05 OFF ");        /** '\x05' == Custom_Brace @file LCD_Driver.h */
             }
             else
             {
-                LCD_write_string(" ON [OFF]");
+                LCD_write_string(" ON \x05OFF\x05");        /** ..  */
             }
             break;
         case ENTRY:
@@ -90,12 +100,16 @@ static void menu_ui_update()
     }
 }
 
-// return 1 to poll keypad, 2 to enter main screen
 /**
  * Modifies the contents of the menu hierarchy based on the action
  * and the item type if relevant.
  * @param action - the way in which the menu is being interacted with
  * @param keypad_data - any incoming data from the keypad
+ *
+ * @return a flag for caller to use:
+ * 0: nothing
+ * 1: caller should poll keypad for an entry value
+ * 2: caller should overwrite LCD with main screen
  */
 int menu_action(char action, uint8_t keypad_data)
 {
@@ -235,4 +249,78 @@ int menu_action(char action, uint8_t keypad_data)
     
     return 0;
     
+}
+
+/**
+ * Returns the current temp. averaging window
+ * size value stored in the menu item.
+ */
+uint8_t menu_get_window_size()
+{
+    return window_size.value_to_display;
+}
+
+/**
+ * Sets the time and date values in the RTC menu.
+ * @param rtc_time - pointer to an instance of an RTC struct
+ */
+void menu_update_time_data(MCP7940N_time *rtc_time)
+{
+    hour.value_to_display   = BCDtoDEC(rtc_time->hours & 0x3F);     // Strip 12/24 hr bit
+    minute.value_to_display = BCDtoDEC(rtc_time->minutes);
+    second.value_to_display = BCDtoDEC(rtc_time->seconds & 0x7F);   // Strip ST bit
+    month.value_to_display  = BCDtoDEC(rtc_time->month & 0x1F);     // Strip LPYR bit
+    date.value_to_display   = BCDtoDEC(rtc_time->date & 0x3F);
+    year.value_to_display   = BCDtoDEC(rtc_time->year);
+}
+
+/**
+ * Gets the time stored in the menu system
+ * @param rtc_time - pointer to an instance of an RTC struct
+ */
+void menu_get_time(MCP7940N_time *rtc_time)
+{
+    rtc_time->hours = DECtoBCD(hour.value_to_display);
+    rtc_time->minutes = DECtoBCD(minute.value_to_display);
+    rtc_time->seconds = DECtoBCD(second.value_to_display) | ST_BIT;
+    rtc_time->month = DECtoBCD(month.value_to_display);
+    rtc_time->date = DECtoBCD(date.value_to_display);
+    rtc_time->year = DECtoBCD(year.value_to_display);
+}
+
+/**
+ * Returns the LCD contrast stored in the menu
+ */
+uint8_t menu_get_contrast()
+{
+    return lcd_contrast.value_to_display;
+}
+
+/**
+ * Gets the RGB values stored in the menu
+ * @param r - pointer to a value where Red is returned
+ * @param g - pointer to a value where Green is returned
+ * @param b - pointer to a value where Blue is returned
+ */
+void menu_get_rgb(uint8_t *r, uint8_t *g, uint8_t *b)
+{
+    *r = red.value_to_display;
+    *g = green.value_to_display;
+    *b = blue.value_to_display;
+}
+
+/**
+ * Returns the state of the menu's cursor enable option
+ */
+uint8_t menu_get_cursor()
+{
+    return cursor_on_off.value_to_display;
+}
+
+/**
+ * Returns the state of the menu's cursor blink option
+ */
+uint8_t menu_get_blink()
+{
+    return cursor_blink.value_to_display;
 }

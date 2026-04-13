@@ -10,6 +10,7 @@
 #include <msp430fr2153.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "utils.h"
 #include "LCD_Driver.h"
 #include "rotary_encoder.h"
 

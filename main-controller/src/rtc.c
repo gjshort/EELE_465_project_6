@@ -1,6 +1,7 @@
 #include <msp430fr2153.h>
 #include "eUSCI.h"
 #include "rtc.h"
+#include "utils.h"
 
 /**
  * Writes the time to the RTC one register at a time.
@@ -88,5 +89,52 @@ void rtc_read_time_reg(MCP7940N_time *rtc_time, uint8_t *rtc_reg_idx)
         break;
     default:
         break;
+    }
+}
+
+/**
+ * Ensure values won't brick the RTC (not checking wkday).
+ * @param rtc_time - pointer to a created RTC struct
+ */
+void rtc_verify_struct(MCP7940N_time *rtc_time)
+{
+    if(BCDtoDEC(rtc_time->seconds) > 59)
+    {
+        rtc_time->seconds = DECtoBCD(59) | ST_BIT;
+    }
+
+    if(BCDtoDEC(rtc_time->minutes) > 59)
+    {
+        rtc_time->minutes = DECtoBCD(59);
+    }
+
+    if(BCDtoDEC(rtc_time->hours) > 23)
+    {
+        rtc_time->hours = DECtoBCD(23);
+    }
+
+    if(BCDtoDEC(rtc_time->date) > 31)
+    {
+        rtc_time->date = DECtoBCD(31);
+    }
+
+    if(BCDtoDEC(rtc_time->date) < 1)
+    {
+        rtc_time->date = DECtoBCD(1);
+    }
+
+    if(BCDtoDEC(rtc_time->month) > 12)
+    {
+        rtc_time->month = DECtoBCD(12);
+    }
+
+    if(BCDtoDEC(rtc_time->month) < 1)
+    {
+        rtc_time->month = DECtoBCD(1);
+    }
+
+    if(BCDtoDEC(rtc_time->year) > 99)
+    {
+        rtc_time->year = DECtoBCD(99);
     }
 }

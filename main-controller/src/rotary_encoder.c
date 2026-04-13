@@ -72,6 +72,11 @@ void init_rotary_A_B() {
     rotary_pins_input_up(&rotary_pins.A);
     rotary_pins_input_up(&rotary_pins.B);
 
+    // Enable port A falling edge trigger
+    P3IFG &= ~(rotary_pins.A.bit_mask);
+	P3IES &= ~(rotary_pins.A.bit_mask);
+	P3IE |= rotary_pins.A.bit_mask;
+
 }
 
 /**

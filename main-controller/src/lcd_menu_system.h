@@ -2,6 +2,7 @@
 #define LCD_MENU_SYS_H
 
 #include <stdint.h>
+#include "RTC.h"
 
 // Menu Actions
 #define DOWN 'd'        // Scroll Down
@@ -57,21 +58,13 @@ typedef struct menu_sys
     uint8_t current_menu_size;
 } menu_sys;
 
-// We just need one menu hierarchy for our system.
-// Easier if it's global so we don't need to pass it
-// around everywhere in main.
-extern menu_sys lcd_menu;
-
-// We have 3 submenus in the hierarchy (see docs folder for details)
-#define MAIN_MENU_SIZE 7
-extern menu_item *main_menu[MAIN_MENU_SIZE];
-
-#define RTC_MENU_SIZE 7
-extern menu_item *rtc_menu[RTC_MENU_SIZE];
-
-#define WS2812B_MENU_SIZE 4
-extern menu_item *ws2812b_menu[WS2812B_MENU_SIZE];
-
 int menu_action(char action, uint8_t keypad_data);
+uint8_t menu_get_window_size();
+void menu_update_time_data(MCP7940N_time *rtc_time);
+void menu_get_time(MCP7940N_time *rtc_time);
+uint8_t menu_get_contrast();
+void menu_get_rgb(uint8_t *r, uint8_t *g, uint8_t *b);
+uint8_t menu_get_cursor();
+uint8_t menu_get_blink();
 
 #endif

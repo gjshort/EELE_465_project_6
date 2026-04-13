@@ -114,11 +114,15 @@ void ui8toa(uint8_t data, char result [4])
         rev_num /= 10;
     }
 
-    // Handle case when one's place is 0 and
-    // reversing number removes it
+    // Handle case when one's and/or tens 
+    // place is 0 and reversing number removes it
     if(data % 10 == 0)
     {
         result[digit_idx++] = '0';
+        if(data % 100 == 0)
+        {
+            result[digit_idx++] = '0';
+        }
     }
 
     // String null termination

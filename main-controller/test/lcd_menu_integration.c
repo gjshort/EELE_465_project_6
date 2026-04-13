@@ -129,6 +129,11 @@ int main(void)
                                     .pattern_dir = 0,
                                     .pattern = 0x0AAA };
 
+    // LED Stick
+    uint8_t led_stick_g = 140;
+    uint8_t led_stick_r = 110;
+    uint8_t led_stick_b = 0;
+
     // Buttons
     bool is_pattern_change_button_low = true;
     bool is_color_change_button_low = true;
@@ -157,9 +162,7 @@ int main(void)
 
     // UART
     init_eUSCI_A1_uart();
-    UCA1IFG &= ~UCRXIFG;
-    UCA1IE |= UCRXIE;
-    
+       
     // LCD startup / init | 4-bit, 2-line operation for now
     LCD_init_4bit();
     init_dac();
@@ -184,7 +187,7 @@ int main(void)
     lcd_ui_write_window(temp_avg_window);
 
     // LCD Custom characters
-    LCD_load_multiple_chars(Customs, 5);
+    LCD_load_multiple_chars(Customs, 8);
     LCD_home();
 
     while(1) 
@@ -341,7 +344,7 @@ int main(void)
                 {
                     lcd_ui_write_date_time(&rtc_time);      // Update LCD
                 }
-        
+                menu_update_time_data(&rtc_time);
             }
             else                                        // Still reading
             {
@@ -411,6 +414,7 @@ int main(void)
             // Add new value to ring buf, re-average the buffer with
             // a specified window and then convert avg. to string
             ring_buf_push(&temp_buf, lmt87_temp);
+            temp_avg_window = menu_get_window_size();
             lmt87_temp_avg = ring_buf_average(&temp_buf, temp_avg_window);
 
             // Clear string buffer then put new avg. temp into it in ASCII
@@ -445,7 +449,7 @@ int main(void)
         if(is_slide_adc_done)
         {
             // Change LED Stick level and update LCD
-            potStick(LEDpot);
+            potStick(LEDpot, led_stick_g, led_stick_r, led_stick_b);
             if(on_main_screen)
             {
                 lcd_ui_write_period(TB0CCR0 / (float)TB0_1_SEC);
@@ -461,6 +465,7 @@ int main(void)
             uart_rx_irq = false;
             if(UCA1RXBUF == '#')
             {
+                // Null terminate value
                 keypad_chars[uart_rx_msg_idx] = '\0';
                 uart_rx_msg_idx = 0;
                 rx_keypad = false;
@@ -468,15 +473,31 @@ int main(void)
                 uint8_t keypad_data = (uint8_t)atoi(keypad_chars);
                 menu_action(KEY_DATA, keypad_data);
 
+                // Update RTC
+                menu_get_time(&rtc_time);
+                rtc_verify_struct(&rtc_time);
+                rtc_mode = I2C_WRITE;
+                write_to_rtc = true;
+
+                // Update Contrast
+                lcd_contrast = menu_get_contrast();
+                dac_write(lcd_contrast);
+
+                // Update LED Stick Colors
+                menu_get_rgb(&led_stick_r, &led_stick_g, &led_stick_b);
+
                 // Zero-out Rx Buffer
                 uint8_t i;
                 for(i = 0; i < sizeof(keypad_chars); i++)
                 {
                     keypad_chars[i] = '\0';
                 }
+
+                UCA1IE &= ~UCRXIE;
             }
             else 
             {
+                // store received char
                 keypad_chars[uart_rx_msg_idx] = UCA1RXBUF;
                 uart_rx_msg_idx++;
             }
@@ -485,23 +506,27 @@ int main(void)
 
 
         // --------------------- MENU SYS INTERACTION --------------------
+        
+        // Poll rotary switch
         if(poll_rotary)
         {
             poll_rotary = false;
-            poll_rotary_rotation();
             poll_rotary_switch();
         }
         
+        // Scroll down
         if(rotary_CW && !rx_keypad && !on_main_screen) {
             rotary_CW = false;
             menu_action(DOWN, 0);
         }
 
+        // Scroll Up
         if(rotary_CCW && !rx_keypad && !on_main_screen) {
             rotary_CCW = false;
             menu_action(UP, 0);
         }
 
+        // Rotary Switch
         if(rotary_switch && !rx_keypad) {
             rotary_switch = false;
             if(!on_main_screen)
@@ -510,9 +535,12 @@ int main(void)
                 {
                 case 1:
                     rx_keypad = true;
+                    UCA1IFG &= ~UCRXIFG;
+                    UCA1IE |= UCRXIE;
                     break;
                 case 2:
                     on_main_screen = true;
+                    LCD_clear();
                     lcd_ui_write_pattern(led_bar_pattern.pattern_num);
                     lcd_ui_write_period(TB0CCR0 / (float)TB0_1_SEC);
                     lcd_ui_write_temp(lmt87_temp_avg);
@@ -520,6 +548,24 @@ int main(void)
                     lcd_ui_write_window(temp_avg_window);
                     break;
                 }
+
+                // Update Cursor
+                if(menu_get_cursor())
+                {
+                    if(menu_get_blink())
+                    {
+                        LCD_cursor_blink();
+                    }
+                    else 
+                    {
+                        LCD_cursor_no_blink();
+                    }
+                }
+                else
+                {
+                    LCD_cursor_off();
+                }
+
             }
             else
             {
@@ -540,6 +586,25 @@ int main(void)
 // -----------------------------------------------------------
 // ------------------------ ISRs -----------------------------
 // -----------------------------------------------------------
+
+// Rotary encoder spin ISR (Pin A rising edge)
+#pragma vector = PORT3_VECTOR
+__interrupt void ROTARY_SPIN_ISR()
+{
+    // If B is low, go CW
+    if((P3IN & BIT1) == 0)
+    {
+        rotary_CW = true;
+        rotary_CCW = false;
+    }
+    else 
+    {
+        rotary_CW = false;
+        rotary_CCW = true;
+    }
+    
+    P3IFG &= ~BIT0;
+}
 
 // ADC conversion ISR
 #pragma vector = ADC_VECTOR
@@ -579,11 +644,16 @@ __interrupt void ISR_TB1_CCR0(void)
         cactus_count = 0;
         update_cactus = true;
 
+    }
+
+    // Trigger every 250 ms
+    half_sec_cnt++;
+    if(half_sec_cnt == 5)
+    {
         poll_rotary = true;
     }
 
     // Trigger every 0.5 seconds
-    half_sec_cnt++;
     if(half_sec_cnt >= 10)
     {
         half_sec_cnt = 0;
